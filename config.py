@@ -44,9 +44,9 @@ DEFAULT_HEADERS = {
 # Konfigurasi Scraping
 HEADLESS = os.getenv("HEADLESS", "true").lower() == "true"
 # DEFAULT_PAGES dipertahankan untuk kompatibilitas; nilainya adalah putaran scroll.
-DEFAULT_PAGES = int(os.getenv("DEFAULT_PAGES", "2"))
-JEDA_MIN = float(os.getenv("JEDA_MIN", "2.5"))
-JEDA_MAX = float(os.getenv("JEDA_MAX", "4.5"))
+DEFAULT_PAGES = int(os.getenv("DEFAULT_PAGES"))
+JEDA_MIN = float(os.getenv("JEDA_MIN"))
+JEDA_MAX = float(os.getenv("JEDA_MAX"))
 
 raw_kw = os.getenv("DEFAULT_KEYWORDS", "iphone 15,keyboard mechanical,tws anc")
 DEFAULT_KEYWORDS = [k.strip() for k in raw_kw.split(",") if k.strip()]

@@ -51,7 +51,8 @@ COOLDOWN_DETIK = 300  # 5 menit cooldown untuk non-admin
 def _parse_keyword_min_price(args: list[str]) -> tuple[str, float | None]:
     """Pisahkan filter harga minimum eksplisit dari keyword."""
     if len(args) > 1:
-        match = re.fullmatch(r"min:(\d+(?:[.,]\d+)?)(rb|jt)?", args[-1], re.IGNORECASE)
+        match = re.fullmatch(r"min:(\d+(?:[.,]\d+)?)(rb|jt)?", args[-1],
+                             re.IGNORECASE)
         if match:
             jumlah = float(match.group(1).replace(",", "."))
             satuan = (match.group(2) or "").lower()
@@ -60,6 +61,26 @@ def _parse_keyword_min_price(args: list[str]) -> tuple[str, float | None]:
                 return " ".join(args[:-1]).strip(), jumlah * pengali
 
     return " ".join(args).strip(), None
+
+
+def _parse_scrape_args(args: list[str]) -> tuple[str, float | None, int]:
+    """Pisahkan keyword, filter harga minimum, dan jumlah putaran scroll."""
+    scroll_args = [arg for arg in args if arg.lower().startswith("scroll:")]
+    if len(scroll_args) > 1:
+        raise ValueError("Gunakan satu opsi `scroll:n` dengan angka minimal 1.")
+
+    halaman_maks = config.DEFAULT_PAGES
+    if scroll_args:
+        match = re.fullmatch(r"scroll:(\d+)", scroll_args[0], re.IGNORECASE)
+        if not match or int(match.group(1)) < 1:
+            raise ValueError("Opsi `scroll:n` harus berupa angka minimal 1.")
+        halaman_maks = int(match.group(1))
+
+    keyword_args = [arg for arg in args if not arg.lower().startswith("scroll:")]
+    keyword, pmin = _parse_keyword_min_price(keyword_args)
+    if not keyword:
+        raise ValueError("Masukkan kata kunci yang ingin di-scrape.")
+    return keyword, pmin, halaman_maks
 
 
 def cek_cooldown(user_id: int) -> int | None:
@@ -215,12 +236,18 @@ async def scrape_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if not context.args:
         await update.message.reply_text(
-            "⚠️ Masukkan kata kunci.\n*Contoh*: `/scrape iphone 14` atau `/scrape iphone 14 min:500rb`",
+            "⚠️ Masukkan kata kunci.\n"
+            "*Contoh*: `/scrape iphone 14`, `/scrape iphone 14 min:500rb`, "
+            "atau `/scrape iphone 14 scroll:3`",
             parse_mode=ParseMode.MARKDOWN
         )
         return
 
-    keyword, pmin = _parse_keyword_min_price(context.args)
+    try:
+        keyword, pmin, halaman_maks = _parse_scrape_args(context.args)
+    except ValueError as e:
+        await update.message.reply_text(f"⚠️ {e}", parse_mode=ParseMode.MARKDOWN)
+        return
 
     # Periksa cooldown
     sisa = cek_cooldown(user_id)
@@ -233,11 +260,11 @@ async def scrape_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     async with SCRAPE_LOCK:
         USER_COOLDOWN[user_id] = time.time()
-        notif = await update.message.reply_text(f"🚀 Memulai browser Playwright untuk *'{keyword}'*... Mohon tunggu $\\approx 15-25$ detik.", parse_mode=ParseMode.MARKDOWN)
+        notif = await update.message.reply_text(f"🚀 Memulai browser Playwright untuk *'{keyword}'*... Mohon tunggu sekitar 15-25 detik.", parse_mode=ParseMode.MARKDOWN)
 
         try:
             scraper = TokopediaScraper(headless=config.HEADLESS)
-            data = await scraper.ambil_keyword(keyword, halaman_maks=config.DEFAULT_PAGES, pmin=pmin)
+            data = await scraper.ambil_keyword(keyword, halaman_maks=halaman_maks, pmin=pmin)
             baru = db.simpan_produk(data, keyword)
 
             df = analisis.bersihkan(db.baca_produk(keyword))

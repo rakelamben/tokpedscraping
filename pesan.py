@@ -13,11 +13,11 @@ BANTUAN = (
     "• `/grafik <keyword>` - Mengirimkan 3 grafik visual analisis pasar\n"
     "• `/laporan <keyword>` - Unduh file riset pasar lengkap (.xlsx & .pdf)\n\n"
     "🔄 *Otomasi & Pemantauan:*\n"
-    "• `/scrape <keyword> [min:jumlah]` - Scrape data realtime; filter minimum opsional (contoh: `min:500rb`, `min:1jt`)\n"
+    "• `/scrape <keyword> [min:jumlah] [scroll:n]` - Scrape data realtime; filter minimum dan jumlah putaran scroll opsional\n"
     "• `/langganan <keyword>` - Menerima rekap intelijen pasar otomatis setiap pukul 08:00 WIB\n"
     "• `/berhenti` - Hentikan langganan laporan harian\n"
     "• `/help` - Tampilkan panduan ini\n\n"
-    "💡 _Contoh: `/pasar iphone 14` atau `/scrape iphone 14 min:500rb`_"
+    "💡 _Contoh: `/pasar iphone 14`, `/scrape iphone 14 min:500rb`, atau `/scrape iphone 14 scroll:3`_"
 )
 
 
